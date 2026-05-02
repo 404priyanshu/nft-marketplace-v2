@@ -1,57 +1,78 @@
-# Sample Hardhat 3 Beta Project (`node:test` and `viem`)
+# Viem NFT Marketplace
 
-This project showcases a Hardhat 3 Beta project using the native Node.js test runner (`node:test`) and the `viem` library for Ethereum interactions.
+A full local NFT marketplace built with Hardhat 3, Solidity, OpenZeppelin, Viem, and a React/Vite frontend.
 
-To learn more about the Hardhat 3 Beta, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+## What It Includes
 
-## Project Overview
+- `MyNFT`: ERC721 minting contract with token URI storage.
+- `NFTMarketplace`: escrow-based marketplace with listing, price updates, cancellation, exact-price purchases, seller payouts, and marketplace fees.
+- Viem-powered Hardhat tests.
+- Viem deployment and demo scripts.
+- React frontend that mints NFTs, approves/list NFTs, shows active listings, buys listings, and cancels your own listings.
 
-This example project includes:
-
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using [`node:test`](nodejs.org/api/test.html), the new Node.js native test runner, and [`viem`](https://viem.sh/).
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
-
-## Usage
-
-### Running Tests
-
-To run all the tests in the project, execute the following command:
+## Install
 
 ```shell
-npx hardhat test
+npm install
 ```
 
-You can also selectively run the Solidity or `node:test` tests:
+## Verify
 
 ```shell
-npx hardhat test solidity
-npx hardhat test nodejs
+npm test
+npm run typecheck
+npm run build
 ```
 
-### Make a deployment to Sepolia
+## Run Locally
 
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
-
-To run the deployment to a local chain:
+Start a local Hardhat node:
 
 ```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
+npm run node
 ```
 
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
-
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
-
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
+In a second terminal, deploy the contracts to that node:
 
 ```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
+npm run deploy
 ```
 
-After setting the variable, you can run the deployment with the Sepolia network:
+The deployment script writes the frontend contract addresses to `src/deployment.ts`.
+
+Start the app:
 
 ```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
+npm run dev
 ```
+
+Open the Vite URL, connect a wallet to chain `31337`, and use the local Hardhat account private keys for testing.
+
+## Demo Script
+
+Run a complete marketplace flow on an in-memory Hardhat network:
+
+```shell
+npm run demo
+```
+
+The script deploys both contracts, mints an NFT to a seller, approves and lists it, buys it from another account, and prints the final token owner.
+
+## Contract Flow
+
+1. Seller mints with `MyNFT.mint` or `MyNFT.mintTo`.
+2. Seller approves the marketplace for the token.
+3. Seller calls `NFTMarketplace.createListing`.
+4. Marketplace escrows the NFT.
+5. Buyer calls `purchaseListing` with the exact ETH price.
+6. Marketplace transfers the NFT, pays the seller, and sends the fee to the fee recipient.
+
+## Scripts
+
+- `npm run compile`: compile Solidity contracts.
+- `npm run typecheck`: type-check the TypeScript contracts tooling and frontend.
+- `npm test`: run the Viem test suite.
+- `npm run deploy`: deploy to `localhost` and update `src/deployment.ts`.
+- `npm run demo`: run an end-to-end marketplace script.
+- `npm run dev`: start the React frontend.
+- `npm run build`: compile contracts and build the frontend.

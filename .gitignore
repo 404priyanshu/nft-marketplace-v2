@@ -9,6 +9,9 @@ build
 .next
 out
 
+# Local NFT assets and draft metadata
+nft-images/
+
 # Environment variables
 .env
 .env.local

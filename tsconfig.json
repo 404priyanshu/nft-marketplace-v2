@@ -1,13 +1,17 @@
 /* Based on https://github.com/tsconfig/bases/blob/501da2bcd640cf95c95805783e1012b992338f28/bases/node22.json */
 {
   "compilerOptions": {
-    "lib": ["es2023"],
+    "lib": ["es2023", "dom", "dom.iterable"],
     "module": "node16",
     "target": "es2022",
+    "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
     "moduleResolution": "node16",
+    "types": ["node", "vite/client"],
     "outDir": "dist"
   }
 }
