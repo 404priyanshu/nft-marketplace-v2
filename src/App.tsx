@@ -11,7 +11,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  Store,
+  Apple,
   Tag,
   Wallet,
   X,
@@ -503,7 +503,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <span className="brand-mark">
-            <Store size={22} aria-hidden="true" />
+            <Apple size={20} aria-hidden="true" />
           </span>
           <span>
             <strong>Viem NFT Marketplace</strong>
@@ -549,16 +549,16 @@ export default function App() {
         <section className="market-hero">
           <motion.div
             className="hero-copy"
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
             <Badge variant="success">
               <BadgeCheck size={14} aria-hidden="true" />
               Live market
             </Badge>
-            <h1>Dark gallery for shiny on-chain collectibles.</h1>
-            <p>Mint, list, and trade your card-style NFTs with a local Viem wallet flow.</p>
+            <h1>Pro collectibles. Now on-chain.</h1>
+            <p>Mint, list, and trade NFTs with an effortless, secure, and intuitive experience.</p>
           </motion.div>
 
           <div className="stats-grid" aria-label="Marketplace stats">
