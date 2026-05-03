@@ -760,6 +760,22 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.ownership-pill {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid rgba(216, 244, 95, 0.24);
+  border-radius: 999px;
+  color: #efffaf;
+  background: rgba(216, 244, 95, 0.08);
+  font-size: 0.9rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
 .listing-actions {
   min-height: 70px;
   padding: 0 16px 16px;

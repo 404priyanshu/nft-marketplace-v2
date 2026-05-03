@@ -57,6 +57,14 @@ type Listing = {
   imageURL: string;
 };
 
+type OwnedNFT = {
+  tokenId: bigint;
+  tokenURI: string;
+  name: string;
+  description: string;
+  imageURL: string;
+};
+
 type MarketFilter = "all" | "mine" | "available";
 type SortOrder = "recent" | "price-asc" | "price-desc";
 
@@ -84,11 +92,13 @@ const publicClient = createPublicClient({
 export default function App() {
   const [account, setAccount] = useState<Address | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [ownedNFTs, setOwnedNFTs] = useState<OwnedNFT[]>([]);
   const [tokenURI, setTokenURI] = useState(DEFAULT_TOKEN_URI);
   const [listTokenId, setListTokenId] = useState("");
   const [listPrice, setListPrice] = useState("0.25");
   const [isBusy, setIsBusy] = useState(false);
   const [isLoadingListings, setIsLoadingListings] = useState(false);
+  const [isLoadingOwnedNFTs, setIsLoadingOwnedNFTs] = useState(false);
   const [notice, setNotice] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [marketFilter, setMarketFilter] = useState<MarketFilter>("all");
@@ -126,6 +136,7 @@ export default function App() {
         : [],
     [account, listings],
   );
+  const myCollectionCount = myListings.length + ownedNFTs.length;
   const visibleListings = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -277,9 +288,72 @@ export default function App() {
     }
   }, [isDeployed]);
 
+  const loadOwnedNFTs = useCallback(
+    async (owner: Address | null) => {
+      if (!isDeployed || !owner) {
+        setOwnedNFTs([]);
+        return;
+      }
+
+      setIsLoadingOwnedNFTs(true);
+      try {
+        const totalMinted = (await publicClient.readContract({
+          address: deployment.myNFT,
+          abi: myNFTAbi,
+          functionName: "totalMinted",
+        })) as bigint;
+
+        const ownedTokens = await Promise.all(
+          Array.from({ length: Number(totalMinted) }, async (_, index) => {
+            const tokenId = BigInt(index + 1);
+            const tokenOwner = (await publicClient.readContract({
+              address: deployment.myNFT,
+              abi: myNFTAbi,
+              functionName: "ownerOf",
+              args: [tokenId],
+            })) as Address;
+
+            if (tokenOwner.toLowerCase() !== owner.toLowerCase()) {
+              return null;
+            }
+
+            const uri = (await publicClient.readContract({
+              address: deployment.myNFT,
+              abi: myNFTAbi,
+              functionName: "tokenURI",
+              args: [tokenId],
+            })) as string;
+            const metadata = await resolveNFTMetadata(uri, tokenId);
+
+            return {
+              ...metadata,
+              tokenId,
+              tokenURI: uri,
+            };
+          }),
+        );
+
+        setOwnedNFTs(ownedTokens.filter(Boolean) as OwnedNFT[]);
+      } catch (error) {
+        setNotice(readError(error));
+      } finally {
+        setIsLoadingOwnedNFTs(false);
+      }
+    },
+    [isDeployed],
+  );
+
+  const refreshMarketplace = useCallback(async () => {
+    await Promise.all([loadListings(), loadOwnedNFTs(account)]);
+  }, [account, loadListings, loadOwnedNFTs]);
+
   useEffect(() => {
     void loadListings();
   }, [loadListings]);
+
+  useEffect(() => {
+    void loadOwnedNFTs(account);
+  }, [account, loadOwnedNFTs]);
 
   useEffect(() => {
     if (!window.ethereum?.on) {
@@ -325,6 +399,7 @@ export default function App() {
         functionName: "totalMinted",
       })) as bigint;
       setListTokenId(mintedTokenId.toString());
+      await loadOwnedNFTs(account);
     });
   }
 
@@ -357,7 +432,7 @@ export default function App() {
         args: [deployment.myNFT, tokenId, price],
       });
       await publicClient.waitForTransactionReceipt({ hash: listingHash });
-      await loadListings();
+      await refreshMarketplace();
     });
   }
 
@@ -379,7 +454,7 @@ export default function App() {
       });
 
       await publicClient.waitForTransactionReceipt({ hash });
-      await loadListings();
+      await refreshMarketplace();
     });
   }
 
@@ -400,7 +475,7 @@ export default function App() {
       });
 
       await publicClient.waitForTransactionReceipt({ hash });
-      await loadListings();
+      await refreshMarketplace();
     });
   }
 
@@ -453,7 +528,7 @@ export default function App() {
             type="button"
             variant="ghost"
             title="Refresh listings"
-            onClick={() => void loadListings()}
+            onClick={() => void refreshMarketplace()}
           >
             <RefreshCw size={18} aria-hidden="true" />
           </Button>
@@ -616,7 +691,7 @@ export default function App() {
                 {[
                   ["all", `All ${activeListingCount}`],
                   ["available", `Buy ${availableCount}`],
-                  ["mine", `Mine ${myListings.length}`],
+                  ["mine", `Mine ${myCollectionCount}`],
                 ].map(([value, label]) => (
                   <Button
                     className={marketFilter === value ? "active" : ""}
@@ -643,103 +718,234 @@ export default function App() {
                 </select>
               </label>
 
-              {isLoadingListings && (
+              {(isLoadingListings || isLoadingOwnedNFTs) && (
                 <Loader2 className="spin muted-icon" size={20} aria-hidden="true" />
               )}
             </div>
 
-            <div className="listing-grid">
-              <AnimatePresence initial={false}>
-                {visibleListings.map((listing) => {
-                  const isMine =
-                    account &&
-                    listing.seller.toLowerCase() === account.toLowerCase();
+            {marketFilter === "mine" ? (
+              <>
+                <div className="listing-grid">
+                  <AnimatePresence initial={false}>
+                    {myListings.map((listing) => (
+                      <ListingCard
+                        account={account}
+                        isBusy={isBusy}
+                        key={`listing-${listing.listingId.toString()}`}
+                        listing={listing}
+                        onBuy={buyListing}
+                        onCancel={cancelListing}
+                      />
+                    ))}
+                    {ownedNFTs.map((nft) => (
+                      <OwnedNFTCard
+                        key={`owned-${nft.tokenId.toString()}`}
+                        nft={nft}
+                        onList={(tokenId) => {
+                          setListTokenId(tokenId.toString());
+                          setNotice(`Token #${tokenId.toString()} ready to list`);
+                        }}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
 
-                  return (
-                    <motion.article
-                      className="listing-card"
-                      key={listing.listingId.toString()}
-                      layout
-                      initial={{ opacity: 0, y: 16, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 12, scale: 0.98 }}
-                      transition={{ duration: 0.24 }}
-                    >
-                      <div className="nft-media">
-                        {listing.imageURL ? (
-                          <img
-                            src={listing.imageURL}
-                            alt={listing.name}
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="media-fallback">
-                            <Gem size={34} aria-hidden="true" />
-                            <span>#{listing.tokenId.toString()}</span>
-                          </div>
-                        )}
-                        <div className="media-overlay">
-                          <Badge variant={isMine ? "warning" : "success"}>
-                            {isMine ? "Owned" : "Listed"}
-                          </Badge>
-                          <strong>#{listing.tokenId.toString()}</strong>
-                        </div>
-                      </div>
+                {myCollectionCount === 0 && (
+                  <motion.div
+                    className="empty-state"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    No owned NFTs found
+                  </motion.div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="listing-grid">
+                  <AnimatePresence initial={false}>
+                    {visibleListings.map((listing) => (
+                      <ListingCard
+                        account={account}
+                        isBusy={isBusy}
+                        key={listing.listingId.toString()}
+                        listing={listing}
+                        onBuy={buyListing}
+                        onCancel={cancelListing}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
 
-                      <div className="listing-body">
-                        <div>
-                          <span className="collection-label">Viem Creatures</span>
-                          <h3>{listing.name}</h3>
-                          <p>Seller {formatAddress(listing.seller)}</p>
-                        </div>
-                        <strong className="price-pill">
-                          <CircleDollarSign size={17} aria-hidden="true" />
-                          {formatEthValue(listing.price)}
-                        </strong>
-                      </div>
-
-                      <div className="listing-actions">
-                        {isMine ? (
-                          <Button
-                            className="button-full"
-                            type="button"
-                            variant="outline"
-                            onClick={() => void cancelListing(listing)}
-                            disabled={isBusy}
-                          >
-                            <X size={17} aria-hidden="true" />
-                            Cancel Listing
-                          </Button>
-                        ) : (
-                          <Button
-                            className="button-full"
-                            type="button"
-                            onClick={() => void buyListing(listing)}
-                            disabled={isBusy}
-                          >
-                            <ShoppingBag size={17} aria-hidden="true" />
-                            Buy Now
-                          </Button>
-                        )}
-                      </div>
-                    </motion.article>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-
-            {visibleListings.length === 0 && (
-              <motion.div
-                className="empty-state"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                No listings found
-              </motion.div>
+                {visibleListings.length === 0 && (
+                  <motion.div
+                    className="empty-state"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    No listings found
+                  </motion.div>
+                )}
+              </>
             )}
           </section>
         </section>
       </main>
+    </div>
+  );
+}
+
+function ListingCard({
+  account,
+  isBusy,
+  listing,
+  onBuy,
+  onCancel,
+}: {
+  account: Address | null;
+  isBusy: boolean;
+  listing: Listing;
+  onBuy: (listing: Listing) => Promise<void>;
+  onCancel: (listing: Listing) => Promise<void>;
+}) {
+  const isMine =
+    account && listing.seller.toLowerCase() === account.toLowerCase();
+
+  return (
+    <motion.article
+      className="listing-card"
+      layout
+      initial={{ opacity: 0, y: 16, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 12, scale: 0.98 }}
+      transition={{ duration: 0.24 }}
+    >
+      <NFTMedia
+        badge={isMine ? "Listed by you" : "Listed"}
+        imageURL={listing.imageURL}
+        name={listing.name}
+        tokenId={listing.tokenId}
+        variant={isMine ? "warning" : "success"}
+      />
+
+      <div className="listing-body">
+        <div>
+          <span className="collection-label">Viem Creatures</span>
+          <h3>{listing.name}</h3>
+          <p>Seller {formatAddress(listing.seller)}</p>
+        </div>
+        <strong className="price-pill">
+          <CircleDollarSign size={17} aria-hidden="true" />
+          {formatEthValue(listing.price)}
+        </strong>
+      </div>
+
+      <div className="listing-actions">
+        {isMine ? (
+          <Button
+            className="button-full"
+            type="button"
+            variant="outline"
+            onClick={() => void onCancel(listing)}
+            disabled={isBusy}
+          >
+            <X size={17} aria-hidden="true" />
+            Cancel Listing
+          </Button>
+        ) : (
+          <Button
+            className="button-full"
+            type="button"
+            onClick={() => void onBuy(listing)}
+            disabled={isBusy}
+          >
+            <ShoppingBag size={17} aria-hidden="true" />
+            Buy Now
+          </Button>
+        )}
+      </div>
+    </motion.article>
+  );
+}
+
+function OwnedNFTCard({
+  nft,
+  onList,
+}: {
+  nft: OwnedNFT;
+  onList: (tokenId: bigint) => void;
+}) {
+  return (
+    <motion.article
+      className="listing-card owned-nft-card"
+      layout
+      initial={{ opacity: 0, y: 16, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 12, scale: 0.98 }}
+      transition={{ duration: 0.24 }}
+    >
+      <NFTMedia
+        badge="In wallet"
+        imageURL={nft.imageURL}
+        name={nft.name}
+        tokenId={nft.tokenId}
+        variant="success"
+      />
+
+      <div className="listing-body">
+        <div>
+          <span className="collection-label">Viem Creatures</span>
+          <h3>{nft.name}</h3>
+          <p>Owned by you</p>
+        </div>
+        <strong className="ownership-pill">
+          <Gem size={17} aria-hidden="true" />
+          Owned
+        </strong>
+      </div>
+
+      <div className="listing-actions">
+        <Button
+          className="button-full"
+          type="button"
+          variant="secondary"
+          onClick={() => onList(nft.tokenId)}
+        >
+          <Tag size={17} aria-hidden="true" />
+          List This NFT
+        </Button>
+      </div>
+    </motion.article>
+  );
+}
+
+function NFTMedia({
+  badge,
+  imageURL,
+  name,
+  tokenId,
+  variant,
+}: {
+  badge: string;
+  imageURL: string;
+  name: string;
+  tokenId: bigint;
+  variant: "success" | "warning";
+}) {
+  return (
+    <div className="nft-media">
+      {imageURL ? (
+        <img src={imageURL} alt={name} loading="lazy" />
+      ) : (
+        <div className="media-fallback">
+          <Gem size={34} aria-hidden="true" />
+          <span>#{tokenId.toString()}</span>
+        </div>
+      )}
+      <div className="media-overlay">
+        <Badge variant={variant}>{badge}</Badge>
+        <strong>#{tokenId.toString()}</strong>
+      </div>
     </div>
   );
 }
