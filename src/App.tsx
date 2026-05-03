@@ -39,7 +39,7 @@ import { deployment } from "./deployment.js";
 
 const ACTIVE_STATUS = 1;
 const DEFAULT_TOKEN_URI =
-  "https://images.unsplash.com/photo-1634973357973-f2ed2657db3c?auto=format&fit=crop&w=900&q=80";
+  "ipfs://bafkreiavkvhof4xcs7obthi3kvipsy6qx7px3dn6ruekxqvo6yn37y4dci";
 const BPS_DENOMINATOR = 10_000;
 const METADATA_TIMEOUT_MS = 5_000;
 
