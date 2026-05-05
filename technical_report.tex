@@ -1,11 +1,12 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 
-\usepackage[a4paper,margin=1in]{geometry}
+\usepackage[a4paper,top=0.85in,bottom=0.9in,left=0.85in,right=0.85in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{xcolor}
+\usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{array}
@@ -13,176 +14,264 @@
 \usepackage{enumitem}
 \usepackage{listings}
 \usepackage{tikz}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{float}
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric}
 
-\definecolor{primary}{HTML}{1F7A5C}
-\definecolor{secondary}{HTML}{2F4858}
-\definecolor{lightgray}{HTML}{F5F7F9}
-\definecolor{codegray}{HTML}{F8F9FA}
-\definecolor{codeborder}{HTML}{D7DEE8}
+\definecolor{accent}{HTML}{176B5D}
+\definecolor{accentdark}{HTML}{123C45}
+\definecolor{ink}{HTML}{1C2526}
+\definecolor{muted}{HTML}{5D686B}
+\definecolor{softgray}{HTML}{F4F6F6}
+\definecolor{rulegray}{HTML}{CED7D8}
+\definecolor{codebg}{HTML}{F7F8F8}
+\definecolor{codeborder}{HTML}{D9E0E1}
+\definecolor{panelbg}{HTML}{FAFBFB}
 
 \hypersetup{
     colorlinks=true,
-    linkcolor=primary,
-    urlcolor=primary,
-    citecolor=primary,
-    pdftitle={Technical Report: Viem NFT Marketplace},
-    pdfauthor={Project Technical Documentation}
+    linkcolor=accent,
+    urlcolor=accent,
+    citecolor=accent,
+    pdftitle={NFT Marketplace v2 Project Report},
+    pdfauthor={NFT Marketplace v2 Project}
 }
 
-\lstdefinestyle{soliditystyle}{
-    backgroundcolor=\color{codegray},
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\small NFT Marketplace v2}
+\rhead{\small \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{rulegray}\leaders\hrule height \headrulewidth\hfill}}
+
+\titleformat{\section}
+    {\Large\bfseries\color{accentdark}}
+    {\thesection}{0.65em}{}
+\titleformat{\subsection}
+    {\normalsize\bfseries\color{ink}}
+    {\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{2.2ex plus 0.5ex minus 0.2ex}{0.9ex}
+\titlespacing*{\subsection}{0pt}{1.4ex plus 0.3ex minus 0.2ex}{0.5ex}
+
+\captionsetup{font=small,labelfont=bf}
+\setlist[itemize]{leftmargin=1.35em,itemsep=0.25em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=1.55em,itemsep=0.25em,topsep=0.25em}
+\renewcommand{\arraystretch}{1.22}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.42em}
+
+\lstdefinestyle{contractstyle}{
+    backgroundcolor=\color{codebg},
     basicstyle=\ttfamily\small,
     breaklines=true,
     frame=single,
     rulecolor=\color{codeborder},
     numbers=left,
-    numberstyle=\tiny\color{gray},
-    keywordstyle=\color{primary}\bfseries,
-    commentstyle=\color{gray},
-    stringstyle=\color{secondary},
+    numberstyle=\tiny\color{muted},
+    keywordstyle=\color{accentdark}\bfseries,
+    commentstyle=\color{muted},
+    stringstyle=\color{accent},
     showstringspaces=false,
     tabsize=2
 }
 
-\setlist[itemize]{leftmargin=1.4em}
-\setlist[enumerate]{leftmargin=1.6em}
-\renewcommand{\arraystretch}{1.25}
-
-\title{
-    \vspace{-1.2cm}
-    \textbf{Technical Report}\\
-    \large Viem NFT Marketplace
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\sectionrule}{\vspace{-0.2em}{\color{rulegray}\rule{\linewidth}{0.5pt}}\vspace{0.2em}}
+\newcommand{\reportbox}[1]{
+    \fcolorbox{rulegray}{panelbg}{
+        \begin{minipage}{0.96\linewidth}
+            \vspace{0.55em}
+            #1
+            \vspace{0.55em}
+        \end{minipage}
+    }
 }
-\author{NFT Marketplace v2 Project}
-\date{May 2026}
+\newcommand{\screenshotfigure}[2]{
+    \begin{figure}[H]
+        \centering
+        \IfFileExists{screenshots/#1}{
+            \includegraphics[width=0.94\linewidth,height=0.38\textheight,keepaspectratio]{screenshots/#1}
+        }{
+            \begin{tikzpicture}
+                \draw[fill=softgray,draw=rulegray,line width=0.7pt] (0,0) rectangle (14,7);
+                \draw[draw=rulegray,line width=0.5pt] (0,0) -- (14,7);
+                \draw[draw=rulegray,line width=0.5pt] (0,7) -- (14,0);
+                \node[align=center,text=accentdark] at (7,3.5) {\large\bfseries Image Slot\\[0.4em]\code{screenshots/#1}};
+            \end{tikzpicture}
+        }
+        \caption{#2}
+    \end{figure}
+}
 
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \thispagestyle{empty}
+    \vspace*{0.35cm}
+    {\color{accent}\rule{\linewidth}{1.2pt}}
+    \vspace{1.0cm}
 
-\begin{abstract}
-This report documents the design and implementation of \textit{nft-marketplace-v2}, a local NFT marketplace built with Solidity, OpenZeppelin, Hardhat 3, Viem, TypeScript, React, and Vite. The system contains an ERC-721 minting contract, an escrow-based marketplace contract, deployment and demo scripts, automated tests, and a wallet-connected frontend. The marketplace supports NFT minting, token approval, listing creation, price updates, listing cancellation, exact-price purchase execution, seller payouts, and marketplace fee collection.
-\end{abstract}
+    {\Huge\bfseries\color{ink} NFT Marketplace v2\\[0.25em] Project Report\par}
+    \vspace{0.35cm}
+    {\Large\color{muted} Fixed-price NFT marketplace using Solidity, Hardhat, Viem, React, and Vite\par}
+
+    \vfill
+
+    \fcolorbox{accent}{panelbg}{
+        \begin{minipage}{0.94\linewidth}
+            \vspace{0.75em}
+            {\Large\bfseries\color{accentdark} Submitted By}
+
+            \vspace{0.55em}
+            \begin{tabular}{@{}p{0.48\linewidth}p{0.40\linewidth}@{}}
+                \toprule
+                \textbf{Name} & \textbf{Enrollment / Roll No.} \\
+                \midrule
+                Priyanshu Singh & S25MTCG0010 \\
+                Shankarshan Dhull & S25MCAG0101 \\
+                \bottomrule
+            \end{tabular}
+            \vspace{0.75em}
+        \end{minipage}
+    }
+
+    \vspace{0.75cm}
+
+    {\color{accentdark}\textbf{Project Details}}
+    \vspace{0.25em}
+
+    \begin{tabular}{@{}p{0.27\linewidth}p{0.65\linewidth}@{}}
+        \toprule
+        \textbf{Project} & \code{nft-marketplace-v2} \\
+        \textbf{Report Date} & May 2026 \\
+        \textbf{Primary Network} & Hardhat Local, chain \code{31337} \\
+        \textbf{Main Contracts} & \code{MyNFT.sol} and \code{NFTMarketplace.sol} \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{1.15cm}
+    {\color{accent}\rule{\linewidth}{1.2pt}}
+\end{titlepage}
+
+\section*{Summary}
+\addcontentsline{toc}{section}{Summary}
+\sectionrule
+
+\code{nft-marketplace-v2} is a local fixed-price NFT marketplace. It has an ERC-721 minting contract, a marketplace contract that holds listed NFTs in escrow, scripts for deployment and demo runs, tests, and a React frontend that works through Viem.
+
+The project focuses on one clear flow: mint an NFT, approve the marketplace, list it for ETH, buy it from another account, and settle the sale with a marketplace fee. The code is built for local development first, with enough structure to move toward a public testnet later.
+
+\reportbox{
+{\color{accentdark}\textbf{At a glance}}
+\vspace{0.35em}
+
+\begin{tabular}{@{}p{0.27\linewidth}p{0.65\linewidth}@{}}
+\textbf{NFT contract} & {\footnotesize\code{0x5fbdb2315678afecb367f032d93f642f64180aa3}} \\
+\textbf{Marketplace contract} & {\footnotesize\code{0xe7f1725e7734ce288f8367e1bb143e90bb3f0512}} \\
+\textbf{Default fee} & \code{250} basis points, equal to \code{2.5\%}. \\
+\textbf{Main user flow} & Mint, approve, list, buy, and settle. \\
+\end{tabular}
+}
 
 \tableofcontents
 \newpage
 
-\section{Introduction}
+\section{Project Scope}
 
-Non-fungible token marketplaces require coordination between token ownership, marketplace custody, payment settlement, and a user-facing transaction interface. This project implements a compact but complete local marketplace flow for ERC-721 assets. It is designed primarily for development, demonstration, and testing on a local Hardhat network, while also including configuration paths for public test networks such as Sepolia.
-
-The project has three main layers:
+The marketplace is intentionally narrow. It does not try to cover every feature found in large NFT platforms. The useful parts are implemented and tested:
 
 \begin{itemize}
-    \item \textbf{Smart contracts}: Solidity contracts for ERC-721 minting and marketplace escrow.
-    \item \textbf{Blockchain tooling}: Hardhat 3, Viem, deployment scripts, an Ignition module, and tests.
-    \item \textbf{Frontend application}: A React and Vite interface for wallet connection, minting, listing, buying, and cancellation.
+    \item ERC-721 minting with token URI storage.
+    \item Escrowed fixed-price listings.
+    \item Listing price updates and cancellations by the seller.
+    \item Exact-price purchases with seller and fee-recipient payouts.
+    \item Local deployment, demo, test, and frontend workflows.
 \end{itemize}
-
-\section{Project Objectives}
-
-The core objectives of the project are:
-
-\begin{enumerate}
-    \item Provide a simple ERC-721 token contract with URI-based metadata.
-    \item Implement an escrow marketplace where listed NFTs are transferred to the marketplace contract.
-    \item Enforce reliable listing state transitions: active, sold, and canceled.
-    \item Support marketplace fee calculation in basis points.
-    \item Provide a local developer workflow for compile, test, deploy, demo, and frontend use.
-    \item Offer a React interface that interacts with the deployed contracts through Viem.
-\end{enumerate}
 
 \section{Technology Stack}
 
-\begin{longtable}{p{0.28\linewidth} p{0.64\linewidth}}
+\begin{longtable}{p{0.26\linewidth} p{0.66\linewidth}}
 \toprule
-\textbf{Component} & \textbf{Technology and Purpose} \\
+\textbf{Area} & \textbf{Tools Used} \\
 \midrule
 \endhead
-Smart contracts & Solidity \texttt{0.8.28} with OpenZeppelin contracts for ERC-721, ownership, and reentrancy protection. \\
-Contract framework & Hardhat 3 with \texttt{@nomicfoundation/hardhat-toolbox-viem}. \\
-Blockchain client & Viem for deployments, tests, frontend reads, wallet writes, and ETH formatting/parsing. \\
-Frontend & React 19, TypeScript, Vite, Lucide icons, Motion, and lightweight local UI components. \\
-Testing & Node test runner through Hardhat with Viem wallet clients and public client reads. \\
-Deployment & Hardhat scripts and an Ignition module. The local deployment script writes addresses into \texttt{src/deployment.ts}. \\
+Contracts & Solidity \code{0.8.28}, OpenZeppelin ERC-721, Ownable, and ReentrancyGuard. \\
+Development chain & Hardhat 3 with the Viem toolbox. \\
+Blockchain client & Viem for scripts, tests, contract reads, wallet writes, and ETH parsing. \\
+Frontend & React 19, TypeScript, Vite, Lucide icons, Motion, and small local UI components. \\
+Testing & Hardhat test runner with Viem wallet clients and public client reads. \\
+Deployment & Hardhat scripts plus an Ignition module. Local deploys update \code{src/deployment.ts}. \\
 \bottomrule
 \end{longtable}
 
-\section{Repository Structure}
+\section{Repository Map}
 
-\begin{longtable}{p{0.30\linewidth} p{0.62\linewidth}}
+\begin{longtable}{p{0.33\linewidth} p{0.59\linewidth}}
 \toprule
-\textbf{Path} & \textbf{Responsibility} \\
+\textbf{Path} & \textbf{Role} \\
 \midrule
 \endhead
-\texttt{contracts/MyNFT.sol} & ERC-721 minting contract with token URI storage. \\
-\texttt{contracts/NFTMarketplace.sol} & Marketplace contract that escrows tokens, tracks listings, processes purchases, and handles fees. \\
-\texttt{test/NFTMarketplace.ts} & Automated test suite for minting, listing, updating, cancellation, purchase settlement, access control, and invalid actions. \\
-\texttt{scripts/deploy.ts} & Local deployment script that deploys both contracts and updates frontend addresses. \\
-\texttt{scripts/demo-marketplace.ts} & End-to-end demo script that deploys, mints, approves, lists, purchases, and prints the final owner. \\
-\texttt{ignition/modules/NFTMarketplace.ts} & Hardhat Ignition deployment module with fee recipient and fee basis point parameters. \\
-\texttt{src/App.tsx} & Main React application implementing wallet connection and marketplace workflows. \\
-\texttt{src/abi.ts} & Contract ABI bindings used by the frontend. \\
-\texttt{src/deployment.ts} & Current frontend deployment target: chain ID and contract addresses. \\
+\code{contracts/MyNFT.sol} & ERC-721 collection contract with open minting and URI storage. \\
+\code{contracts/NFTMarketplace.sol} & Marketplace contract for escrow, listings, purchases, and fee handling. \\
+\code{test/NFTMarketplace.ts} & Tests for minting, listing, cancellation, purchases, invalid actions, and admin controls. \\
+\code{scripts/deploy.ts} & Deploys both contracts to the local node and writes frontend addresses. \\
+\code{scripts/demo-marketplace.ts} & Runs the full marketplace flow without a browser. \\
+\code{ignition/modules/NFTMarketplace.ts} & Hardhat Ignition deployment module. \\
+\code{src/App.tsx} & Main frontend screen and wallet transaction logic. \\
+\code{src/abi.ts} & ABI definitions used by the frontend. \\
+\code{src/deployment.ts} & Chain ID and contract addresses used by the app. \\
 \bottomrule
 \end{longtable}
 
-\section{System Architecture}
+\section{System Design}
 
-The marketplace follows a contract-centric architecture. The frontend does not maintain authoritative listing state. Instead, it reads listing data from the marketplace contract, resolves token metadata from token URIs, and submits signed transactions through the connected wallet.
+The frontend is not the source of truth. It reads contract state, resolves token metadata, and asks the connected wallet to sign transactions. Listing ownership, status, price, and payout rules live on-chain.
 
 \begin{figure}[h]
 \centering
 \begin{tikzpicture}[
-    node distance=1.5cm,
-    box/.style={rectangle, rounded corners, draw=secondary, thick, fill=lightgray, minimum width=3.1cm, minimum height=1cm, align=center},
-    contract/.style={rectangle, rounded corners, draw=primary, thick, fill=green!7, minimum width=3.2cm, minimum height=1cm, align=center},
-    arrow/.style={-{Latex[length=3mm]}, thick, color=secondary}
+    node distance=1.35cm,
+    box/.style={rectangle, rounded corners, draw=rulegray, thick, fill=softgray, minimum width=3.15cm, minimum height=0.9cm, align=center},
+    contract/.style={rectangle, rounded corners, draw=accent, thick, fill=green!7, minimum width=3.2cm, minimum height=0.9cm, align=center},
+    arrow/.style={-{Latex[length=3mm]}, thick, color=accentdark}
 ]
-    \node[box] (user) {User Wallet\\MetaMask or Injected Provider};
-    \node[box, below=of user] (frontend) {React/Vite Frontend\\Viem Clients};
-    \node[contract, below left=1.2cm and 0.6cm of frontend] (nft) {\texttt{MyNFT}\\ERC-721 Minting};
-    \node[contract, below right=1.2cm and 0.6cm of frontend] (market) {\texttt{NFTMarketplace}\\Escrow and Settlement};
-    \node[box, below=1.4cm of market] (seller) {Seller and Fee\\ETH Payouts};
+    \node[box] (wallet) {Wallet\\MetaMask or injected provider};
+    \node[box, below=of wallet] (frontend) {React frontend\\Viem clients};
+    \node[contract, below left=1.0cm and 0.6cm of frontend] (nft) {\code{MyNFT}\\ERC-721};
+    \node[contract, below right=1.0cm and 0.6cm of frontend] (market) {\code{NFTMarketplace}\\escrow and settlement};
+    \node[box, below=1.1cm of market] (payouts) {Seller and fee\\ETH payouts};
 
-    \draw[arrow] (user) -- node[right]{signs transactions} (frontend);
-    \draw[arrow] (frontend) -- node[left]{mint, approve, tokenURI reads} (nft);
-    \draw[arrow] (frontend) -- node[right]{list, buy, cancel, listing reads} (market);
-    \draw[arrow] (market) -- node[above]{custody transfer} (nft);
-    \draw[arrow] (market) -- node[right]{ETH settlement} (seller);
+    \draw[arrow] (wallet) -- node[right]{signs} (frontend);
+    \draw[arrow] (frontend) -- node[left]{mint, approve, tokenURI} (nft);
+    \draw[arrow] (frontend) -- node[right]{list, buy, cancel, read} (market);
+    \draw[arrow] (market) -- node[above]{NFT custody} (nft);
+    \draw[arrow] (market) -- node[right]{ETH split} (payouts);
 \end{tikzpicture}
-\caption{High-level architecture of the NFT marketplace.}
+\caption{Main contract and frontend interaction path.}
 \end{figure}
 
-\section{Smart Contract Design}
+\section{Contract Design}
 
-\subsection{MyNFT Contract}
+\subsection{MyNFT}
 
-\texttt{MyNFT} extends OpenZeppelin's \texttt{ERC721URIStorage}. It defines the collection name \textit{Viem Marketplace NFT} and symbol \textit{VMNFT}. The contract tracks the total number of minted tokens through \texttt{totalMinted}.
+\code{MyNFT} extends OpenZeppelin \code{ERC721URIStorage}. It names the collection \textit{Viem Marketplace NFT}, uses the symbol \textit{VMNFT}, and increments \code{totalMinted} for every new token.
 
-The contract provides two minting entry points:
-
-\begin{itemize}
-    \item \texttt{mint(string tokenURI)} mints a token to the caller.
-    \item \texttt{mintTo(address to, string tokenURI)} mints a token to a specified recipient.
-\end{itemize}
-
-The minting process increments \texttt{totalMinted}, safely mints the token, stores the token URI, and emits a \texttt{TokenMinted} event. The contract rejects minting to the zero address through a custom \texttt{InvalidRecipient} error.
-
-\subsection{NFTMarketplace Contract}
-
-\texttt{NFTMarketplace} implements the main exchange logic. It inherits:
+The contract has two minting functions:
 
 \begin{itemize}
-    \item \texttt{IERC721Receiver}, allowing the contract to receive ERC-721 tokens through safe transfers.
-    \item \texttt{Ownable}, allowing administrative control over fee settings.
-    \item \texttt{ReentrancyGuard}, protecting state-changing listing and purchase flows from reentrant calls.
+    \item \code{mint(string tokenURI)} mints to the caller.
+    \item \code{mintTo(address to, string tokenURI)} mints to a chosen address.
 \end{itemize}
 
-The marketplace stores listings in a mapping from listing ID to a \texttt{Listing} struct. It also maintains \texttt{listingByToken}, which maps an NFT contract and token ID to its active listing ID.
+Minting to the zero address is rejected with \code{InvalidRecipient}.
 
-\begin{lstlisting}[style=soliditystyle, language=Java, caption={Listing data model used by the marketplace contract.}]
+\subsection{NFTMarketplace}
+
+\code{NFTMarketplace} stores each listing in a \code{Listing} struct. A second mapping, \code{listingByToken}, points from an NFT contract and token ID to the active listing ID. This prevents the frontend from guessing which listing belongs to a token.
+
+\begin{lstlisting}[style=contractstyle, language=Java, caption={Listing state stored by the marketplace.}]
 enum ListingStatus {
     None,
     Active,
@@ -201,177 +290,134 @@ struct Listing {
 }
 \end{lstlisting}
 
-\subsection{Listing Lifecycle}
+The contract receives ERC-721 tokens through \code{IERC721Receiver}, limits fee changes through \code{Ownable}, and protects listing and purchase flows with \code{ReentrancyGuard}.
 
-The listing lifecycle is intentionally small and auditable:
+\subsection{Listing Flow}
 
 \begin{enumerate}
-    \item The seller owns an ERC-721 token.
+    \item The seller owns an NFT.
     \item The seller approves the marketplace for that token.
-    \item The seller calls \texttt{createListing}.
-    \item The marketplace verifies ownership, records the listing, and escrows the NFT.
-    \item The seller may update the price or cancel the listing while it is active.
-    \item A buyer purchases the listing by sending exactly the listing price.
-    \item The marketplace transfers the NFT to the buyer and splits ETH between the seller and fee recipient.
+    \item The seller calls \code{createListing}.
+    \item The marketplace records the listing and transfers the NFT into escrow.
+    \item The seller can update the price or cancel while the listing is active.
+    \item A buyer calls \code{purchaseListing} and sends exactly the listed price.
+    \item The marketplace transfers the NFT to the buyer and pays ETH to the seller and fee recipient.
 \end{enumerate}
 
-\subsection{Fee Model}
+\subsection{Fee Rules}
 
-Marketplace fees are represented in basis points. The denominator is \texttt{10,000}, so a fee of \texttt{250} basis points equals \texttt{2.5\%}. The contract caps marketplace fees at \texttt{1,000} basis points, or \texttt{10\%}, through \texttt{MAX\_MARKETPLACE\_FEE\_BPS}.
-
-For a listing price \(P\) and fee \(F_{bps}\), the fee is calculated as:
+Fees use basis points. The denominator is \code{10,000}, so \code{250} basis points is \code{2.5\%}. The maximum fee is capped at \code{1,000} basis points, or \code{10\%}, through \code{MAX\_MARKETPLACE\_FEE\_BPS}.
 
 \[
-    \text{marketplaceFee} = \frac{P \times F_{bps}}{10000}
+    \text{marketplace fee} = \frac{\text{price} \times \text{fee bps}}{10000}
 \]
-
-The seller receives:
 
 \[
-    \text{sellerProceeds} = P - \text{marketplaceFee}
+    \text{seller proceeds} = \text{price} - \text{marketplace fee}
 \]
 
-\subsection{Administrative Controls}
+\section{Frontend}
 
-The owner can update:
+The frontend in \code{src/App.tsx} uses a public Viem client for reads and an injected wallet client for writes. It supports wallet connection, chain switching, NFT minting, approval and listing, market browsing, buying, and seller-side cancellation.
 
-\begin{itemize}
-    \item \texttt{marketplaceFeeBps}, subject to the maximum fee cap.
-    \item \texttt{feeRecipient}, subject to a non-zero address requirement.
-\end{itemize}
+Metadata is read from \code{tokenURI}. The app handles direct image URLs, JSON metadata URLs, and \code{ipfs://} links by converting them to an IPFS gateway URL. If metadata cannot be loaded, the UI falls back to a simple token label.
 
-Both administrative actions emit events, which makes off-chain indexing and monitoring easier.
+The market screen includes search, filters, sorting, listing cards, active listing counts, floor price, total ask value, and the connected user's owned or listed items.
 
-\section{Frontend Design}
+\clearpage
+\section{Screenshots}
 
-The frontend is implemented in \texttt{src/App.tsx}. It uses Viem to create:
+Place the final screenshots in a folder named \code{screenshots}. Keep the filenames below. LaTeX will use the image automatically when it exists; until then, the report shows a framed image slot with the expected path.
 
-\begin{itemize}
-    \item A \texttt{publicClient} for read-only contract calls and transaction receipt waiting.
-    \item A wallet client using \texttt{custom(window.ethereum)} for signed transactions.
-\end{itemize}
-
-\subsection{Main User Workflows}
-
-The interface supports the following workflows:
-
-\begin{enumerate}
-    \item \textbf{Connect wallet}: Requests wallet accounts and switches to the configured marketplace chain.
-    \item \textbf{Mint NFT}: Calls \texttt{MyNFT.mint}, then reads \texttt{totalMinted} to prefill the token ID for listing.
-    \item \textbf{Approve and list}: Approves the marketplace for a token and then calls \texttt{createListing}.
-    \item \textbf{Browse listings}: Reads all listing IDs from \texttt{1} to \texttt{listingCount}, filters active listings, and resolves metadata.
-    \item \textbf{Buy listing}: Calls \texttt{purchaseListing} with the exact listing price as transaction value.
-    \item \textbf{Cancel own listing}: Calls \texttt{cancelListing} for listings where the connected account is the seller.
-\end{enumerate}
-
-\subsection{Metadata Handling}
-
-The frontend reads \texttt{tokenURI} from \texttt{MyNFT}. It handles direct image URLs and JSON metadata URLs. It also converts \texttt{ipfs://} URIs to the public \texttt{https://ipfs.io/ipfs/} gateway. Metadata fetches have a timeout, and missing metadata falls back to a token-number label.
-
-\subsection{Market Navigation}
-
-The UI includes search, filtering, sorting, market statistics, and listing cards. Listings can be filtered by all listings, listings owned by the connected wallet, and listings available for purchase. Sorting supports newest first, low price first, and high price first.
-
-\section{Deployment and Local Operation}
-
-The recommended local workflow is:
-
-\begin{enumerate}
-    \item Install dependencies with \texttt{npm install}.
-    \item Start a Hardhat node with \texttt{npm run node}.
-    \item Deploy contracts with \texttt{npm run deploy}.
-    \item Start the frontend with \texttt{npm run dev}.
-    \item Connect a wallet to chain \texttt{31337}.
-\end{enumerate}
-
-The deployment script deploys \texttt{MyNFT} first, then deploys \texttt{NFTMarketplace} with the fee recipient and default fee of \texttt{250} basis points. It then writes the frontend deployment configuration to \texttt{src/deployment.ts}. At the time of inspection, the local deployment configuration targets chain \texttt{31337}.
-
-\section{Security Considerations}
-
-The project applies several important smart contract safety practices:
-
-\begin{itemize}
-    \item \textbf{Escrow custody}: Listed NFTs are held by the marketplace, preventing sellers from transferring listed assets away before purchase.
-    \item \textbf{Exact payment enforcement}: Purchases require \texttt{msg.value == listing.price}, avoiding ambiguous overpayment or underpayment behavior.
-    \item \textbf{Reentrancy protection}: Listing creation, cancellation, and purchase are protected with \texttt{nonReentrant}.
-    \item \textbf{Checks-effects-interactions structure}: Purchase state is updated before NFT and ETH transfers.
-    \item \textbf{Custom errors}: The contracts use explicit custom errors for invalid addresses, zero prices, inactive listings, unauthorized sellers, self-purchases, and failed payouts.
-    \item \textbf{Fee cap}: The owner cannot set the marketplace fee above \texttt{10\%}.
-\end{itemize}
-
-Some limitations remain appropriate for a local demonstration project:
-
-\begin{itemize}
-    \item The marketplace currently supports fixed-price listings only.
-    \item Listing discovery in the frontend scans from \texttt{1} to \texttt{listingCount}, which is simple but not suitable for very large markets.
-    \item The NFT contract has open minting and does not restrict who can mint.
-    \item The marketplace does not implement royalties such as ERC-2981.
-    \item ETH payouts use direct calls; failed seller or fee-recipient payouts revert the full purchase.
-\end{itemize}
-
-\section{Testing and Verification}
-
-The project includes a focused automated test suite in \texttt{test/NFTMarketplace.ts}. The tests cover:
-
-\begin{itemize}
-    \item NFT minting and token URI storage.
-    \item Listing creation and escrow transfer.
-    \item Listing price updates by the seller.
-    \item Listing cancellation and NFT return.
-    \item Purchase execution, buyer ownership transfer, seller proceeds, and fee recipient payment.
-    \item Rejection of invalid listing and purchase actions.
-    \item Owner-only marketplace fee and recipient configuration.
-\end{itemize}
-
-\subsection{Verification Results}
-
-The following commands were run successfully:
-
-\begin{longtable}{p{0.30\linewidth} p{0.54\linewidth} p{0.10\linewidth}}
+\begin{longtable}{p{0.39\linewidth} p{0.53\linewidth}}
 \toprule
-\textbf{Command} & \textbf{Result} & \textbf{Status} \\
+\textbf{Image File} & \textbf{What It Should Show} \\
 \midrule
 \endhead
-\texttt{npm test} & Hardhat test suite completed with \texttt{7 passing}. & Pass \\
-\texttt{npm run typecheck} & TypeScript compiler completed with no reported errors. & Pass \\
-\texttt{npm run build} & Hardhat compile completed and Vite produced a production build in \texttt{dist/}. & Pass \\
+\code{screenshots/marketplace-dashboard.png} & Connected wallet, market stats, search or filters, and at least one active listing. \\
+\code{screenshots/mint-list-flow.png} & Minting or approve-and-list form with token ID and ETH price filled in. \\
+\code{screenshots/purchase-cancel-result.png} & Successful purchase or cancellation result in the app. \\
+\code{screenshots/verification-output.png} & Terminal output for tests, typecheck, or build. \\
 \bottomrule
 \end{longtable}
 
-The production build emitted a Vite chunk-size warning for a generated JavaScript asset above 500 kB. This is not a build failure, but future optimization could introduce dynamic imports or manual Rollup chunks.
+\screenshotfigure{marketplace-dashboard.png}{Marketplace dashboard}
 
-\section{End-to-End Marketplace Flow}
+\screenshotfigure{mint-list-flow.png}{Mint and list flow}
 
-The demo script \texttt{scripts/demo-marketplace.ts} executes the complete marketplace flow on an in-memory Hardhat network:
+\screenshotfigure{purchase-cancel-result.png}{Purchase or cancellation result}
+
+\screenshotfigure{verification-output.png}{Verification output}
+
+\clearpage
+\section{Local Workflow}
+
+The normal local run is:
 
 \begin{enumerate}
-    \item Deploy \texttt{MyNFT} and \texttt{NFTMarketplace}.
-    \item Mint a token to the seller.
-    \item Approve the marketplace to transfer the token.
-    \item Create a listing for \texttt{0.25 ETH}.
-    \item Purchase the listing from a buyer account.
-    \item Read and print the new token owner.
+    \item Install dependencies with \code{npm install}.
+    \item Start the local chain with \code{npm run node}.
+    \item Deploy contracts with \code{npm run deploy}.
+    \item Start the frontend with \code{npm run dev}.
+    \item Connect a wallet to chain \code{31337}.
 \end{enumerate}
 
-This script is useful as a quick sanity check because it validates the main interaction path without requiring a browser wallet.
+The deploy script deploys \code{MyNFT}, deploys \code{NFTMarketplace} with the fee recipient and a default fee of \code{250} basis points, then writes the contract addresses to \code{src/deployment.ts}.
 
-\section{Potential Enhancements}
+\section{Testing}
 
-The following improvements would make the project more production-like:
+The test file \code{test/NFTMarketplace.ts} checks the main contract behavior:
 
 \begin{itemize}
-    \item Add event indexing or a subgraph-style data layer for scalable listing discovery.
-    \item Add support for ERC-2981 royalties.
-    \item Add bid, auction, or collection offer functionality.
-    \item Add pagination and event-based refreshes to the frontend.
-    \item Add wallet balance display and clearer chain mismatch handling.
-    \item Add deployment configuration for multiple networks without overwriting local frontend addresses.
-    \item Add static analysis tooling such as Slither and contract coverage reporting.
-    \item Split frontend bundles if production size becomes important.
+    \item minting and token URI storage;
+    \item escrowed listing creation;
+    \item seller-only price updates and cancellations;
+    \item purchase settlement, NFT transfer, seller proceeds, and fee payment;
+    \item rejection of invalid prices, unauthorized actions, self-purchases, and incorrect ETH amounts;
+    \item owner-only fee and fee-recipient changes.
+\end{itemize}
+
+\begin{longtable}{p{0.33\linewidth} p{0.43\linewidth} p{0.13\linewidth}}
+\toprule
+\textbf{Command} & \textbf{Purpose} & \textbf{Status} \\
+\midrule
+\endhead
+\code{npm test} & Runs the Hardhat contract tests. & Pass \\
+\code{npm run typecheck} & Checks TypeScript without emitting files. & Pass \\
+\code{npm run build} & Compiles contracts and builds the Vite app. & Pass \\
+\bottomrule
+\end{longtable}
+
+\section{Security Notes}
+
+The project uses several basic safeguards:
+
+\begin{itemize}
+    \item Listed NFTs are held in marketplace escrow.
+    \item Buyers must pay exactly the listing price.
+    \item Listing creation, cancellation, and purchase use \code{nonReentrant}.
+    \item Purchase state is updated before NFT and ETH transfers.
+    \item Custom errors make failed actions easier to trace.
+    \item The marketplace fee cannot be set above \code{10\%}.
+\end{itemize}
+
+The current version still has clear limits. It supports only fixed-price sales, scans listing IDs from \code{1} to \code{listingCount}, allows open minting, has no royalty standard such as ERC-2981, and sends ETH with direct calls that revert the purchase if a payout fails.
+
+\section{Next Steps}
+
+The most useful improvements would be:
+
+\begin{itemize}
+    \item event-based indexing for listing discovery;
+    \item pagination and automatic market refresh;
+    \item ERC-2981 royalty support;
+    \item bid or auction listings;
+    \item clearer multi-network deployment settings;
+    \item static analysis and contract coverage reports.
 \end{itemize}
 
 \section{Conclusion}
 
-\textit{nft-marketplace-v2} is a complete local NFT marketplace implementation with clear separation between token minting, marketplace settlement, deployment tooling, testing, and frontend interaction. The smart contract design uses escrow custody, explicit state transitions, fee-capped basis point accounting, and reentrancy protection. The React frontend provides the expected marketplace workflows and uses Viem consistently for both read and write operations. Automated tests and build verification passed, making the project a solid foundation for further marketplace features, indexing, royalties, or public testnet deployment.
+This project builds a working local NFT marketplace around a small set of contract rules. The contracts handle minting, escrow, listing status, fee calculation, purchases, and seller payouts. The frontend gives a browser-based way to use those flows through a connected wallet. The code is suitable for demonstration, testing, and further extension toward indexing, royalties, and public testnet deployment.
 
 \end{document}
