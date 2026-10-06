@@ -1,5 +1,7 @@
 # Viem NFT Marketplace
 
+> **Earlier local marketplace build.** For the featured full-stack project, see [BlockForgeNFT](https://github.com/404priyanshu/BlockForgeNFT). This repository keeps the smaller React/Viem and local Hardhat implementation for reference.
+
 A full local NFT marketplace built with Hardhat 3, Solidity, OpenZeppelin, Viem, and a React/Vite frontend.
 
 ## What It Includes
